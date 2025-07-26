@@ -71,19 +71,6 @@ namespace NomapPrinter
                         ShowMessage("$piece_toofar");
                 }
 
-                if (value && showMapBasePiecesRequirement.Value > 0 && Player.m_localPlayer.GetBaseValue() < showMapBasePiecesRequirement.Value)
-                {
-                    value = false;
-                    ShowMessage(String.Format(messageNotEnoughBasePieces.Value, Player.m_localPlayer.GetBaseValue(), showMapBasePiecesRequirement.Value));
-                }
-
-
-                if (value && showMapComfortRequirement.Value > 0 && Player.m_localPlayer.GetComfortLevel() < showMapComfortRequirement.Value)
-                {
-                    value = false;
-                    ShowMessage(String.Format(messageNotEnoughComfort.Value, Player.m_localPlayer.GetComfortLevel(), showMapComfortRequirement.Value));
-                }
-
                 _displayingWindow = value;
 
                 if (_displayingWindow)

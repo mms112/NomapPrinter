@@ -408,6 +408,18 @@ namespace NomapPrinter
             }
         }
 
+        private struct CompactPinData
+        {
+            public CompactPinData(string name, bool isChecked)
+            {
+                m_name = name;
+                m_checked = isChecked;
+            }
+
+            public string m_name;
+            public bool m_checked;
+        }
+
         public static WorldMapData worldMapData;
         public static ExploredMapData exploredMapData = new ExploredMapData();
 
@@ -1158,7 +1170,7 @@ namespace NomapPrinter
 
         private static IEnumerator AddPinsOnMap(Color32[] map, int mapSize)
         {
-            foreach (KeyValuePair<Vector3, string> pin in GetPinsToPrint())
+            foreach (KeyValuePair<Vector3, CompactPinData> pin in GetPinsToPrint())
             {
                 // get position in relative float instead of vector
                 Minimap.instance.WorldToMapPoint(pin.Key, out float mx, out float my);
@@ -1167,7 +1179,7 @@ namespace NomapPrinter
                 if (mx >= 1 || my >= 1 || mx <= 0 || my <= 0)
                     continue;
 
-                Color32[] iconPixels = pinIcons[pin.Value];
+                Color32[] iconPixels = pinIcons[pin.Value.m_name];
                 if (iconPixels != null)
                 {
                     // get icon position in array
@@ -1182,6 +1194,12 @@ namespace NomapPrinter
                             int pos = (iconmy + row) * mapSize + iconmx + col;
 
                             Color32 iconPix = iconPixels[row * iconSize + col];
+
+                            if (pin.Value.m_checked)
+                            {
+                                iconPix.a = (Byte)(iconPix.a * checkedPinsAlpha.Value);  // checked pins are transparent
+                            }
+
                             if (mapType.Value == MapType.Chart || mapType.Value == MapType.OldChart)
                             {
                                 // add yellow tint of chart maps, one iteration is enough for OldChart
@@ -1222,9 +1240,9 @@ namespace NomapPrinter
             };
         }
 
-        private static List<KeyValuePair<Vector3, string>> GetPinsToPrint()
+        private static List<KeyValuePair<Vector3, CompactPinData>> GetPinsToPrint()
         {
-            List<KeyValuePair<Vector3, string>> pinsToPrint = new List<KeyValuePair<Vector3, string>>();    // key - map position, value - icon name
+            List<KeyValuePair<Vector3, CompactPinData>> pinsToPrint = new List<KeyValuePair<Vector3, CompactPinData>>();    // key - map position, value - icon name
 
             if (!showPins.Value)
                 return pinsToPrint;
@@ -1248,14 +1266,14 @@ namespace NomapPrinter
                         if (showExploredPins.Value)
                         {
                             Minimap.instance.WorldToPixel(pin.m_pos, out int px, out int py);
-                            if (!IsExplored(px, py) && (!IsMerchantPin(pin.m_icon.name) || !showMerchantPins.Value))
+                            if (!IsExplored(px, py) && (!IsMerchantPin(pin.m_icon.name) || !showMerchantPins.Value) && !IsHildirQuestPin(pin.m_icon.name))
                                 continue;
                         }
                     }
                 }
 
                 if (IsShowablePinIcon(pin))
-                    pinsToPrint.Add(new KeyValuePair<Vector3, string>(pin.m_pos, pin.m_icon.name));
+                    pinsToPrint.Add(new KeyValuePair<Vector3, CompactPinData>(pin.m_pos, new CompactPinData(pin.m_icon.name, pin.m_checked)));
             }
 
             return pinsToPrint;
@@ -1303,6 +1321,17 @@ namespace NomapPrinter
                 "MapIconBounty" => showPinEpicLoot.Value,
                 "TreasureMapIcon" => showPinEpicLoot.Value,
                 "mapicon_eventarea" => showPinEpicLoot.Value && epicLootIsLoaded,
+                _ => false,
+            };
+        }
+
+        private static bool IsHildirQuestPin(string pinIcon)
+        {
+            return pinIcon switch
+            {
+                "mapicon_hildir1" => true,
+                "mapicon_hildir2" => true,
+                "mapicon_hildir3" => true,
                 _ => false,
             };
         }

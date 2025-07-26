@@ -70,6 +70,7 @@ namespace NomapPrinter
         public static ConfigEntry<bool> showMyPins;
         public static ConfigEntry<bool> showNonCheckedPins;
         public static ConfigEntry<bool> showMerchantPins;
+        public static ConfigEntry<float> checkedPinsAlpha;
 
         public static ConfigEntry<bool> showEveryPin;
         public static ConfigEntry<bool> showPinStart;
@@ -263,6 +264,7 @@ namespace NomapPrinter
             showMerchantPins = config("Pins", "Show merchants pins always", true, "Show merchant pins even in unexplored part of the map");
             showMyPins = config("Pins", "Show only my pins", true, "Only show your pins on the map");
             showNonCheckedPins = config("Pins", "Show only unchecked pins", true, "Only show pins that doesn't checked (have no red cross)");
+            checkedPinsAlpha = config("Pins", "Checked Pins Alpha", 1.0f, "Used Alpha value for checked pins (1 = opaque)");
 
             showEveryPin = config("Pins list", "Show all pins", false, "Show all pins");
             showPinStart = config("Pins list", "Show Start pins", true, "Show Start pin on drawed map");
@@ -431,6 +433,18 @@ namespace NomapPrinter
                 if (!PrivateArea.CheckAccess(__instance.transform.position))
                     return;
 
+                if (showMapBasePiecesRequirement.Value > 0 && Player.m_localPlayer.GetBaseValue() < showMapBasePiecesRequirement.Value)
+                {
+                    ShowMessage(String.Format(messageNotEnoughBasePieces.Value, Player.m_localPlayer.GetBaseValue(), showMapBasePiecesRequirement.Value));
+                    return;
+                }
+
+                if (showMapComfortRequirement.Value > 0 && Player.m_localPlayer.GetComfortLevel() < showMapComfortRequirement.Value)
+                {
+                    ShowMessage(String.Format(messageNotEnoughComfort.Value, Player.m_localPlayer.GetComfortLevel(), showMapComfortRequirement.Value));
+                    return;
+                }
+
                 MapMaker.SavePlayerExploration();
 
                 if (mapWindow.Value == MapWindow.ShowOnInteraction)
@@ -464,6 +478,18 @@ namespace NomapPrinter
 
                 if (!PrivateArea.CheckAccess(__instance.transform.position))
                     return;
+
+                if (showMapBasePiecesRequirement.Value > 0 && Player.m_localPlayer.GetBaseValue() < showMapBasePiecesRequirement.Value)
+                {
+                    ShowMessage(String.Format(messageNotEnoughBasePieces.Value, Player.m_localPlayer.GetBaseValue(), showMapBasePiecesRequirement.Value));
+                    return;
+                }
+
+                if (showMapComfortRequirement.Value > 0 && Player.m_localPlayer.GetComfortLevel() < showMapComfortRequirement.Value)
+                {
+                    ShowMessage(String.Format(messageNotEnoughComfort.Value, Player.m_localPlayer.GetComfortLevel(), showMapComfortRequirement.Value));
+                    return;
+                }
 
                 MapMaker.SavePlayerExploration();
 
