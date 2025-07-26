@@ -1,129 +1,12 @@
-﻿<?xml version="1.0" encoding="utf-8"?>
-<Project ToolsVersion="15.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
-  <PropertyGroup>
-    <ReferencePath>D:\work\source\repos\Assemblies\stable\publicized_assemblies\;D:\work\source\repos\Assemblies\stable\;D:\work\source\repos\Assemblies\Harmony\;D:\work\source\repos\Assemblies\Managers\</ReferencePath>
-    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
-    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{BA601320-0ECE-4B27-B2A4-A1FE1BA817B3}</ProjectGuid>
-    <OutputType>Library</OutputType>
-    <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>NomapPrinter</RootNamespace>
-    <AssemblyName>NomapPrinter</AssemblyName>
-    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
-    <FileAlignment>512</FileAlignment>
-    <Deterministic>true</Deterministic>
-    <TargetFrameworkProfile />
-    <NuGetPackageImportStamp>
-    </NuGetPackageImportStamp>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-    <DebugSymbols>true</DebugSymbols>
-    <DebugType>full</DebugType>
-    <Optimize>false</Optimize>
-    <OutputPath>bin\Debug\</OutputPath>
-    <DefineConstants>DEBUG;TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <CodeAnalysisRuleSet>MinimumRecommendedRules.ruleset</CodeAnalysisRuleSet>
-    <CodeAnalysisIgnoreGeneratedCode>false</CodeAnalysisIgnoreGeneratedCode>
-  </PropertyGroup>
-  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-    <DebugType>pdbonly</DebugType>
-    <Optimize>true</Optimize>
-    <OutputPath>bin\Release\</OutputPath>
-    <DefineConstants>TRACE</DefineConstants>
-    <ErrorReport>prompt</ErrorReport>
-    <WarningLevel>4</WarningLevel>
-  </PropertyGroup>
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(SolutionDir)\valheim.targets" />
   <PropertyGroup>
     <LangVersion>10.0</LangVersion>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <NoWarn>1701;1702;CS1685</NoWarn>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="0Harmony, Version=2.9.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\Harmony\0Harmony.dll</HintPath>
-    </Reference>
-    <Reference Include="assembly_guiutils, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\stable\publicized_assemblies\assembly_guiutils_publicized.dll</HintPath>
-      <HintPath Condition="Exists('..\Assemblies\stable\publicized_assemblies\assembly_guiutils.dll')">..\Assemblies\stable\publicized_assemblies\assembly_guiutils.dll</HintPath>
-    </Reference>
-    <Reference Include="assembly_utils, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\stable\publicized_assemblies\assembly_utils_publicized.dll</HintPath>
-      <HintPath Condition="Exists('..\Assemblies\stable\publicized_assemblies\assembly_utils.dll')">..\Assemblies\stable\publicized_assemblies\assembly_utils.dll</HintPath>
-    </Reference>
-    <Reference Include="assembly_valheim, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\stable\publicized_assemblies\assembly_valheim_publicized.dll</HintPath>
-      <HintPath Condition="Exists('..\Assemblies\stable\publicized_assemblies\assembly_valheim.dll')">..\Assemblies\stable\publicized_assemblies\assembly_valheim.dll</HintPath>
-    </Reference>
-    <Reference Include="BepInEx, Version=5.4.22.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\Harmony\BepInEx.dll</HintPath>
-    </Reference>
-    <Reference Include="ConditionalConfigSync, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\Managers\ConditionalConfigSync.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
-    <Reference Include="netstandard, Version=2.1.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\stable\netstandard.dll</HintPath>
-    </Reference>
-    <Reference Include="Splatform, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\stable\Splatform.dll</HintPath>
-    </Reference>
-    <Reference Include="System" />
-    <Reference Include="Unity.TextMeshPro, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\stable\Unity.TextMeshPro.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\stable\UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\stable\UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.ImageConversionModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\stable\UnityEngine.ImageConversionModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.IMGUIModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\stable\UnityEngine.IMGUIModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.InputLegacyModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\stable\UnityEngine.InputLegacyModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UI, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\stable\UnityEngine.UI.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.UIModule, Version=0.0.0.0, Culture=neutral, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\stable\UnityEngine.UIModule.dll</HintPath>
-    </Reference>
-    <Reference Include="mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\Assemblies\stable\mscorlib.dll</HintPath>
-    </Reference>
-  </ItemGroup>
-  <ItemGroup>
-    <Compile Include="InteractiveMap.cs" />
-    <Compile Include="LocalizationManager.cs" />
-    <Compile Include="MapGenerator.cs" />
-    <Compile Include="MapMaker.cs" />
-    <Compile Include="MapPinTexts.cs" />
-    <Compile Include="MapViewer.cs" />
-    <Compile Include="NomapPrinter.cs" />
-    <Compile Include="Properties\AssemblyInfo.cs" />
+    <PackageReference Include="Contrib.Bcl.Ranges" Version="1.0.0" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="ILRepack.targets" />
@@ -137,58 +20,14 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <None Include="EmbeddedLocalizations.csv" />
-    <EmbeddedResource Include="translations\Chinese.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="translations\Chinese_Trad.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="translations\Czech.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="translations\Dutch.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="translations\English.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="translations\French.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="translations\German.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="translations\Japanese.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="translations\Korean.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="translations\Polish.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="translations\Portuguese_Brazilian.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="translations\Russian.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="translations\Spanish.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="translations\Turkish.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <EmbeddedResource Include="translations\Ukrainian.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </EmbeddedResource>
-    <None Include="UpdateThunderstoreManifest.ps1" />
-    <None Include="UpdateTranslations.ps1" />
+    <Content Include="$(SolutionDir)\Config\$(AssemblyName)\shudnal.$(AssemblyName)\Chart.MatzesWelt.overfog.png" Link="Config\Chart.MatzesWelt.overfog.png" />
   </ItemGroup>
-  <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
-  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="ConditionalConfigSync">
+      <HintPath>$(SolutionDir)\Plugins\ConditionalConfigSync\ConditionalConfigSync.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+  <ItemGroup>
+    <UpToDateCheckInput Include="@(Content)" />
+  </ItemGroup>
 </Project>
