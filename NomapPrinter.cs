@@ -283,7 +283,7 @@ namespace NomapPrinter
             showPinEpicLoot = config("Pins list", "Show Epic Loot pins", true, "Show Epic Loot pins on drawed map");
             showLastDeathPin = config("Pins list", "Show Last Death pin", true, "Show pin where you died last time");
 
-            tablePartsSwap = config("Table", "Swap interaction behaviour on map table parts", false, "Make \"Read map\" part to open interactive map and \"Record discoveries\" part to generate map. +" +
+            tablePartsSwap = config("Table", "Swap interaction behaviour on map table parts", true, "Make \"Read map\" part to open interactive map and \"Record discoveries\" part to generate map. +" +
                                                                                                      "\nDoesn't work in Show On Interaction map mode [Not Synced with Server]", false);
 
             cacheDirectory = Path.Combine(Paths.CachePath, pluginID);
