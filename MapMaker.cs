@@ -567,19 +567,17 @@ namespace NomapPrinter
                 // Vanilla map does not need pregeneration
                 if (!pregeneration)
                 {
-                    ShowMessage("$nomapprinter_start");
+                    ShowMessage("$nomapprinter_saving");
                     yield return GetVanillaMap(2048 * (int)mapSize.Value, haveExploration);
                 }
             }
             else
             {
-                if (!pregeneration) ShowMessage("$nomapprinter_start");
+                if (!pregeneration) ShowMessage("$nomapprinter_saving");
 
                 if (!exploredMapData.LoadExploredMap())
                 {
                     yield return PrepareTerrainData();
-
-                    if (!pregeneration) ShowMessage("$nomapprinter_saving");
 
                     yield return MapGenerator.Initialize();
 
@@ -942,8 +940,6 @@ namespace NomapPrinter
                         map[i] = Color32.Lerp(map[i], mapClouds[i], lerp[i]);
 
             });
-
-            ShowMessage("$nomapprinter_saving");
 
             internalThread.Start();
             while (internalThread.IsAlive == true)
