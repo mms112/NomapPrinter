@@ -89,14 +89,6 @@ namespace NomapPrinter
         public static ConfigEntry<bool> showPinEpicLoot;
         public static ConfigEntry<bool> showLastDeathPin;
 
-        public static ConfigEntry<string> messageStart;
-        public static ConfigEntry<string> messageSaving;
-        public static ConfigEntry<string> messageReady;
-        public static ConfigEntry<string> messageSavedTo;
-        public static ConfigEntry<string> messageNotReady;
-        public static ConfigEntry<string> messageNotEnoughBasePieces;
-        public static ConfigEntry<string> messageNotEnoughComfort;
-
         public static ConfigEntry<bool> tablePartsSwap;
 
         public static readonly CustomSyncedValue<string> mapDataFromFile = new CustomSyncedValue<string>(configSync, "mapDataFromFile", "");
@@ -250,14 +242,6 @@ namespace NomapPrinter
             mapGamepadZoomSpeed = config("Map style extended", "Map gamepad zoom speed", 1f, "Speed of map zoom while using gamepad. [Not Synced with Server]", false);
             mapGamepadMoveSpeed = config("Map style extended", "Map gamepad move speed", 1f, "Speed of map move while using gamepad. [Not Synced with Server]", false);
             mapSizeMultiplier = config("Map style extended", "Map size multiplier", 1f, "Use similar multiplier as in EWSize mod. Map size multiplier should also match world radius to get correct results.");
-
-            messageStart = config("Messages", "Drawing begin", "Remembering travels...", "Center message when drawing is started. [Not Synced with Server]", false);
-            messageSaving = config("Messages", "Drawing end", "Drawing map...", "Center message when saving file is started. [Not Synced with Server]", false);
-            messageReady = config("Messages", "Saved", "Map is ready", "Center message when file is saved. [Not Synced with Server]", false);
-            messageSavedTo = config("Messages", "Saved to", "Map saved to", "Top left message with file name. [Not Synced with Server]", false);
-            messageNotReady = config("Messages", "Not ready", "Map is not drawn yet", "Center message on trying to open a not ready map. [Not Synced with Server]", false);
-            messageNotEnoughBasePieces = config("Messages", "Not enough base pieces", "Not enough base pieces ({0} of {1})", "Center message on trying to open a map with failed base pieces requirement check. [Not Synced with Server]", false);
-            messageNotEnoughComfort = config("Messages", "Not enough comfort", "Not enough comfort ({0} of {1})", "Center message on trying to open a map with failed comfort requirement check. [Not Synced with Server]", false);
 
             showPins = config("Pins", "Show map pins", true, "Show pins on drawed map");
             showExploredPins = config("Pins", "Show only explored pins", true, "Only show pins on explored part of the map");
@@ -435,13 +419,13 @@ namespace NomapPrinter
 
                 if (showMapBasePiecesRequirement.Value > 0 && Player.m_localPlayer.GetBaseValue() < showMapBasePiecesRequirement.Value)
                 {
-                    ShowMessage(String.Format(messageNotEnoughBasePieces.Value, Player.m_localPlayer.GetBaseValue(), showMapBasePiecesRequirement.Value));
+                    ShowMessage(String.Format(Localization.instance.Localize("$nomap_printer_base"), Player.m_localPlayer.GetBaseValue(), showMapBasePiecesRequirement.Value));
                     return;
                 }
 
                 if (showMapComfortRequirement.Value > 0 && Player.m_localPlayer.GetComfortLevel() < showMapComfortRequirement.Value)
                 {
-                    ShowMessage(String.Format(messageNotEnoughComfort.Value, Player.m_localPlayer.GetComfortLevel(), showMapComfortRequirement.Value));
+                    ShowMessage(String.Format(Localization.instance.Localize("$nomap_printer_comfort"), Player.m_localPlayer.GetComfortLevel(), showMapComfortRequirement.Value));
                     return;
                 }
 
@@ -481,13 +465,13 @@ namespace NomapPrinter
 
                 if (showMapBasePiecesRequirement.Value > 0 && Player.m_localPlayer.GetBaseValue() < showMapBasePiecesRequirement.Value)
                 {
-                    ShowMessage(String.Format(messageNotEnoughBasePieces.Value, Player.m_localPlayer.GetBaseValue(), showMapBasePiecesRequirement.Value));
+                    ShowMessage(String.Format(Localization.instance.Localize("$nomap_printer_base"), Player.m_localPlayer.GetBaseValue(), showMapBasePiecesRequirement.Value));
                     return;
                 }
 
                 if (showMapComfortRequirement.Value > 0 && Player.m_localPlayer.GetComfortLevel() < showMapComfortRequirement.Value)
                 {
-                    ShowMessage(String.Format(messageNotEnoughComfort.Value, Player.m_localPlayer.GetComfortLevel(), showMapComfortRequirement.Value));
+                    ShowMessage(String.Format(Localization.instance.Localize("$nomap_printer_comfort"), Player.m_localPlayer.GetComfortLevel(), showMapComfortRequirement.Value));
                     return;
                 }
 

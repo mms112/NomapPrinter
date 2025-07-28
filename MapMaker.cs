@@ -500,19 +500,17 @@ namespace NomapPrinter
                 // Vanilla map does not need pregeneration
                 if (!pregeneration)
                 {
-                    ShowMessage(messageStart.Value);
+                    ShowMessage(Localization.instance.Localize("$nomap_printer_drawing"));
                     yield return GetVanillaMap(2048 * (int)mapSize.Value, haveExploration);
                 }
             }
             else
             {
-                if (!pregeneration) ShowMessage(messageStart.Value);
+                if (!pregeneration) ShowMessage(Localization.instance.Localize("$nomap_printer_drawing"));
 
                 if (!exploredMapData.LoadExploredMap())
                 {
                     yield return PrepareTerrainData();
-
-                    if (!pregeneration) ShowMessage(messageSaving.Value);
 
                     yield return MapGenerator.Initialize();
 
@@ -544,7 +542,7 @@ namespace NomapPrinter
 
                     yield return ApplyMapTexture(MapGenerator.Result);
 
-                    ShowMessage(messageReady.Value);
+                    ShowMessage(Localization.instance.Localize("$nomap_printer_ready"));
                 }
 
                 MapGenerator.DeInitializeTextures();
@@ -580,7 +578,7 @@ namespace NomapPrinter
                     yield return null;
                 }
 
-                ShowMessage($"{messageSavedTo.Value} {filepath}", MessageHud.MessageType.TopLeft);
+                ShowMessage($"{Localization.instance.Localize("$nomap_printer_saved")} {filepath}", MessageHud.MessageType.TopLeft);
             }
 
             LogInfo("Finished Map Draw");
@@ -844,8 +842,6 @@ namespace NomapPrinter
                         map[i] = Color32.Lerp(map[i], mapClouds[i], lerp[i]);
 
             });
-
-            ShowMessage(messageSaving.Value);
 
             internalThread.Start();
             while (internalThread.IsAlive == true)

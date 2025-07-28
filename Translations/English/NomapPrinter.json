@@ -1,0 +1,8 @@
+{
+  "nomap_printer_drawing": "Drawing map...",
+  "nomap_printer_ready": "Map is ready",
+  "nomap_printer_saved": "Map saved to",
+  "nomap_printer_not_ready": "Map is not drawn yet",
+  "nomap_printer_base": "Not enough base pieces ({0} of {1})",
+  "nomap_printer_comfort": "Not enough comfort ({0} of {1})"
+}

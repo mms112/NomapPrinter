@@ -184,7 +184,7 @@ namespace NomapPrinter
         public static void ShowMap()
         {
             if (!IsMapReady())
-                ShowMessage(messageNotReady.Value);
+                ShowMessage(Localization.instance.Localize("$nomap_printer_not_ready"));
             else
                 DisplayingWindow = true;
         }

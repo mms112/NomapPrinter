@@ -1,0 +1,8 @@
+{
+  "nomap_printer_drawing": "Zeichne Karte...",
+  "nomap_printer_ready": "Karte ist bereit",
+  "nomap_printer_saved": "Karte gespeichert unter",
+  "nomap_printer_not_ready": "Keine Karte verfügbar",
+  "nomap_printer_base": "Benötigt Basis ({0} / {1})",
+  "nomap_printer_comfort": "Nicht gemütlich genug ({0} / {1})"
+}
