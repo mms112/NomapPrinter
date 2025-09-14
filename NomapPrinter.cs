@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using UnityEngine;
 using static Terminal;
+using MaikelMod.Mods;
 
 namespace NomapPrinter
 {
@@ -461,9 +462,34 @@ namespace NomapPrinter
         [HarmonyPatch(typeof(MapTable), nameof(MapTable.OnRead), new Type[] { typeof(Switch), typeof(Humanoid), typeof(ItemDrop.ItemData), typeof(bool) })]
         public static class MapTable_OnRead_ReadDiscoveriesInteraction
         {
+            public static bool Prefix(MapTable __instance)
+            {
+                if (!modEnabled.Value)
+                    return true;
+
+                if (Input.GetKey(KeyCode.LeftShift))
+                    return false;
+
+                MapCharge component = MapCharge.getComponent(__instance);
+                if (component == null)
+                    return true;
+
+                if (component.GetCurrentCharge() <= 0)
+                    return false;
+
+                return true;
+            }
+
             public static void Postfix(MapTable __instance, ItemDrop.ItemData item)
             {
                 if (!modEnabled.Value)
+                    return;
+
+                if (Input.GetKey(KeyCode.LeftShift))
+                    return;
+
+                MapCharge component = MapCharge.getComponent(__instance);
+                if (component == null)
                     return;
 
                 if (item != null)
@@ -474,6 +500,12 @@ namespace NomapPrinter
 
                 if (!PrivateArea.CheckAccess(__instance.transform.position))
                     return;
+
+                if (component.GetCurrentCharge() <= 0)
+                {
+                    ShowMessage(Localization.instance.Localize("$msg_ink_req"));
+                    return;
+                }
 
                 if (showMapBasePiecesRequirement.Value > 0 && Player.m_localPlayer.GetBaseValue() < showMapBasePiecesRequirement.Value)
                 {
@@ -494,7 +526,10 @@ namespace NomapPrinter
                 else if (tablePartsSwap.Value)
                     MapViewer.ShowInteractiveMap();
                 else if (mapStorage.Value != MapStorage.LoadFromSharedFile)
+                {
+                    component.RemoveCharge(1);
                     MapMaker.GenerateMap();
+                }
             }
         }
 
@@ -503,9 +538,24 @@ namespace NomapPrinter
         {
             public static bool isCalled = false;
 
-            public static void Prefix()
+            public static bool Prefix(MapTable __instance)
             {
                 isCalled = true;
+
+                if (!modEnabled.Value)
+                    return true;
+
+                if (Input.GetKey(KeyCode.LeftShift))
+                    return false;
+
+                MapCharge component = MapCharge.getComponent(__instance);
+                if (component == null)
+                    return true;
+
+                if (component.GetCurrentCharge() <= 0)
+                    return false;
+
+                return true;
             }
 
             public static void Postfix(MapTable __instance, ItemDrop.ItemData item)
@@ -515,11 +565,24 @@ namespace NomapPrinter
                 if (!modEnabled.Value)
                     return;
 
+                if (Input.GetKey(KeyCode.LeftShift))
+                    return;
+
+                MapCharge component = MapCharge.getComponent(__instance);
+                if (component == null)
+                    return;
+
                 if (item != null)
                     return;
 
                 if (!PrivateArea.CheckAccess(__instance.transform.position))
                     return;
+
+                if (component.GetCurrentCharge() <= 0)
+                {
+                    ShowMessage(Localization.instance.Localize("$msg_ink_req"));
+                    return;
+                }
 
                 if (showMapBasePiecesRequirement.Value > 0 && Player.m_localPlayer.GetBaseValue() < showMapBasePiecesRequirement.Value)
                 {
@@ -536,7 +599,10 @@ namespace NomapPrinter
                 MapMaker.SavePlayerExploration();
 
                 if ((tablePartsSwap.Value || mapWindow.Value == MapWindow.ShowOnInteraction) && mapStorage.Value != MapStorage.LoadFromSharedFile)
+                {
+                    component.RemoveCharge(1);
                     MapMaker.GenerateMap();
+                }
                 else
                     MapViewer.ShowInteractiveMap();
             }

@@ -20,6 +20,9 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MaikelMod\MaikelMod.csproj" />
+  </ItemGroup>
+  <ItemGroup>
     <Content Include="$(SolutionDir)\Config\$(AssemblyName)\shudnal.$(AssemblyName)\Chart.MatzesWelt.overfog.png" Link="Config\Chart.MatzesWelt.overfog.png" />
   </ItemGroup>
   <ItemGroup>
