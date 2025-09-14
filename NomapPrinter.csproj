@@ -23,6 +23,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\MaikelMod\MaikelMod.csproj" />
     <ProjectReference Include="..\ServerSync\ServerSync.csproj" />
   </ItemGroup>
 
