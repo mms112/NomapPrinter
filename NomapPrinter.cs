@@ -1,4 +1,4 @@
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Bootstrap;
 using BepInEx.Configuration;
 using HarmonyLib;
@@ -95,6 +95,8 @@ namespace NomapPrinter
         public static ConfigEntry<TMPro.FontStyles> pinTextFontStyle;
         public static ConfigEntry<Color> pinTextFontColor;
         public static ConfigEntry<int> pinTextOffset;
+
+        public static ConfigEntry<float> checkedPinsAlpha;
 
         public static ConfigEntry<bool> showEveryPin;
         public static ConfigEntry<bool> showPinStart;
@@ -298,6 +300,8 @@ namespace NomapPrinter
 
             pinTextFont.SettingChanged += (s,e) => MapPinTexts.ClearPinFont();
 
+            checkedPinsAlpha = config("Pins", "Checked Pins Alpha", 1.0f, "Used Alpha value for checked pins (1 = opaque)");
+
             showEveryPin = config("Pins list", "Show all pins", false, "Show all pins");
             showPinStart = config("Pins list", "Show Start pins", true, "Show Start pin on drawed map");
             showPinTrader = config("Pins list", "Show Haldor pins", true, "Show Haldor pin on drawed map");
@@ -471,6 +475,18 @@ namespace NomapPrinter
                 if (!PrivateArea.CheckAccess(__instance.transform.position))
                     return;
 
+                if (showMapBasePiecesRequirement.Value > 0 && Player.m_localPlayer.GetBaseValue() < showMapBasePiecesRequirement.Value)
+                {
+                    ShowMessage($"$nomapprinter_notenoughbasepieces: {Player.m_localPlayer.GetBaseValue()}/{showMapBasePiecesRequirement.Value}");
+                    return;
+                }
+
+                if (showMapComfortRequirement.Value > 0 && Player.m_localPlayer.GetComfortLevel() < showMapComfortRequirement.Value)
+                {
+                    ShowMessage($"$nomapprinter_notenoughcomfort: {Player.m_localPlayer.GetComfortLevel()}/{showMapComfortRequirement.Value}");
+                    return;
+                }
+
                 MapMaker.SavePlayerExploration();
 
                 if (mapWindow.Value == MapWindow.ShowOnInteraction)
@@ -504,6 +520,18 @@ namespace NomapPrinter
 
                 if (!PrivateArea.CheckAccess(__instance.transform.position))
                     return;
+
+                if (showMapBasePiecesRequirement.Value > 0 && Player.m_localPlayer.GetBaseValue() < showMapBasePiecesRequirement.Value)
+                {
+                    ShowMessage($"$nomapprinter_notenoughbasepieces: {Player.m_localPlayer.GetBaseValue()}/{showMapBasePiecesRequirement.Value}");
+                    return;
+                }
+
+                if (showMapComfortRequirement.Value > 0 && Player.m_localPlayer.GetComfortLevel() < showMapComfortRequirement.Value)
+                {
+                    ShowMessage($"$nomapprinter_notenoughcomfort: {Player.m_localPlayer.GetComfortLevel()}/{showMapComfortRequirement.Value}");
+                    return;
+                }
 
                 MapMaker.SavePlayerExploration();
 

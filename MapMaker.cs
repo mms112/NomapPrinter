@@ -1,4 +1,4 @@
-using BepInEx;
+﻿using BepInEx;
 using HarmonyLib;
 using System;
 using System.Collections;
@@ -1342,6 +1342,11 @@ namespace NomapPrinter
                                 iconPix.a = alpha;
                             }
 
+                            if (pin.m_checked)
+                            {
+                                iconPix.a = (Byte)(iconPix.a * checkedPinsAlpha.Value);  // checked pins are transparent
+                            }
+
                             if (mapType.Value == MapType.Chart || mapType.Value == MapType.OldChart)
                             {
                                 // add yellow tint of chart maps, one iteration is enough for OldChart
@@ -1455,7 +1460,7 @@ namespace NomapPrinter
                 if (showExploredPins.Value)
                 {
                     Minimap.instance.WorldToPixel(pin.m_pos, out int px, out int py);
-                    if (!IsExplored(px, py) && (!IsMerchantPin(pin.m_icon.name) || !showMerchantPins.Value))
+                    if (!IsExplored(px, py) && (!IsMerchantPin(pin.m_icon.name) || !showMerchantPins.Value) && !IsHildirQuestPin(pin.m_icon.name))
                         return false;
                 }
             }
@@ -1515,6 +1520,17 @@ namespace NomapPrinter
                 "MapIconBounty" => showPinEpicLoot.Value,
                 "TreasureMapIcon" => showPinEpicLoot.Value,
                 "mapicon_eventarea" => showPinEpicLoot.Value && epicLootIsLoaded,
+                _ => false,
+            };
+        }
+
+        private static bool IsHildirQuestPin(string pinIcon)
+        {
+            return pinIcon switch
+            {
+                "mapicon_hildir1" => true,
+                "mapicon_hildir2" => true,
+                "mapicon_hildir3" => true,
                 _ => false,
             };
         }
