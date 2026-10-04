@@ -1499,6 +1499,7 @@ namespace NomapPrinter
                 "MapIconBounty" => showPinEpicLoot.Value,
                 "TreasureMapIcon" => showPinEpicLoot.Value,
                 "mapicon_bogwitch_camp" => showPinBogWitch.Value,
+                "mapicon_upgradestation" => true,
                 _ => false,
             };
         }
