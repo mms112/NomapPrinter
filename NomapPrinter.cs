@@ -19,7 +19,7 @@ namespace NomapPrinter
     {
         public const string pluginID = "shudnal.NomapPrinter";
         public const string pluginName = "Nomap Printer";
-        public const string pluginVersion = "1.5.5";
+        public const string pluginVersion = "1.5.8";
 
         private readonly Harmony harmony = new Harmony(pluginID);
 
@@ -82,6 +82,7 @@ namespace NomapPrinter
         public static ConfigEntry<bool> showMyPins;
         public static ConfigEntry<bool> showNonCheckedPins;
         public static ConfigEntry<bool> showMerchantPins;
+        public static ConfigEntry<bool> showPersistentEventPins;
         public static ConfigEntry<bool> showPinsDoubleSize;
         public static ConfigEntry<bool> showMerchantPinsNames;
 
@@ -104,6 +105,7 @@ namespace NomapPrinter
         public static ConfigEntry<bool> showPinTrader;
         public static ConfigEntry<bool> showPinHildir;
         public static ConfigEntry<bool> showPinHildirQuest;
+        public static ConfigEntry<bool> showPinPersistentEvent;
         public static ConfigEntry<bool> showPinBogWitch;
         public static ConfigEntry<bool> showPinBoss;
         public static ConfigEntry<bool> showPinFire;
@@ -126,6 +128,8 @@ namespace NomapPrinter
         public static readonly CustomSyncedValue<string> customLayerUnderfog = new CustomSyncedValue<string>(configSync, "Custom underfog layer", "");
 
         public static NomapPrinter instance;
+
+        internal static bool IsHeadless { get; private set; }
 
         private static string _localPath = null;
         public static string LocalPath => _localPath ??= Utils.GetSaveDataPath(FileHelpers.FileSource.Local);
@@ -169,26 +173,48 @@ namespace NomapPrinter
 
         void Awake()
         {
-            harmony.PatchAll();
+            LocalizationManager.Localizer.Initialize();
+
             instance = this;
+            IsHeadless = SystemInfo.graphicsDeviceType == UnityEngine.Rendering.GraphicsDeviceType.Null;
+
+            // Headless servers only need file synchronization and legacy data cleanup.
+            if (IsHeadless)
+            {
+                harmony.CreateClassProcessor(typeof(ZoneSystem_Start_CustomTexturesWatcherEnable)).Patch();
+                harmony.CreateClassProcessor(typeof(ZoneSystem_OnDestroy_CustomTexturesWatcherDisable)).Patch();
+                harmony.CreateClassProcessor(typeof(Player_Load_DeleteDeprecatedData)).Patch();
+            }
+            else
+                harmony.PatchAll();
 
             ConfigInit();
             _ = configSync.AddLockingConfigEntry(configLocked);
+            LocalizationManager.Localizer.ApplyCurrentLocalization();
 
             Game.isModded = true;
 
-            customLayerExplored.ValueChanged += new Action(MapMaker.ResetExploredMapOnTextureChange);
-
-            epicLootIsLoaded = Chainloader.PluginInfos.ContainsKey(epicLootGUID);
+            if (!IsHeadless)
+            {
+                customLayerExplored.ValueChanged += MapMaker.ResetExploredMapOnTextureChange;
+                epicLootIsLoaded = Chainloader.PluginInfos.ContainsKey(epicLootGUID);
+            }
         }
 
         void Start()
         {
-            MapViewer.Start();
+            if (!IsHeadless)
+                MapViewer.Start();
         }
 
         void Update()
         {
+            if (IsHeadless)
+                return;
+
+            // Report save results even if the map UI or the mod has since been disabled.
+            MapFileWriter.ReportCompletedWrites();
+
             if (!modEnabled.Value)
                 return;
 
@@ -200,8 +226,29 @@ namespace NomapPrinter
 
         void OnDestroy()
         {
+            if (!IsHeadless)
+            {
+                MapFileWriter.Flush();
+                customLayerExplored.ValueChanged -= MapMaker.ResetExploredMapOnTextureChange;
+                MapViewer.Stop();
+            }
+
+            MapFileSync.Stop();
+            configFolderWatcher?.Dispose();
+            configFolderWatcher = null;
             harmony?.UnpatchSelf();
             instance = null;
+        }
+
+        [HarmonyPatch(typeof(Game), nameof(Game.Shutdown))]
+        private static class Game_Shutdown_FinishMapWrites
+        {
+            // Shutdown saves the local player first. Wait only on exit, not on autosave.
+            [HarmonyPriority(Priority.Last)]
+            private static void Finalizer()
+            {
+                MapFileWriter.Flush();
+            }
         }
 
         private void ConfigInit()
@@ -242,8 +289,11 @@ namespace NomapPrinter
             syncOverFogLayerFromServer.SettingChanged += (sender, args) => ReadTextureFiles();
             syncFogLayerFromServer.SettingChanged += (sender, args) => ReadTextureFiles();
 
-            useCustomExploredLayer.SettingChanged += (sender, args) => MapMaker.ResetExploredMap();
-            syncExploredLayerFromServer.SettingChanged += (sender, args) => MapMaker.ResetExploredMap();
+            if (!IsHeadless)
+            {
+                useCustomExploredLayer.SettingChanged += (sender, args) => MapMaker.ResetExploredMap();
+                syncExploredLayerFromServer.SettingChanged += (sender, args) => MapMaker.ResetExploredMap();
+            }
 
             showNearTheTableDistance = config("Map restrictions", "Show map near the table when distance is less than", defaultValue: 10f, "Distance to nearest map table for map to be shown (only for \"Show Near The Table\" map mode)");
             showMapBasePiecesRequirement = config("Map restrictions", "Show map when base pieces near the player is more than", defaultValue: 0, "Count of base pieces surrounding the player should be more than that for map to be shown");
@@ -256,8 +306,8 @@ namespace NomapPrinter
             localFolder = config("Map storage", "Local folder", "", "Save and load map data from local folder. If relative path is set then the folder will be created at %appdata%..\\..\\LocalLow\\IronGate\\Valheim");
             sharedFile = config("Map storage", "Shared file", "", "Load map from the file name instead of generating one. File should be available on the server.");
 
-            mapStorage.SettingChanged += (sender, args) => MapViewer.SetupSharedMapFileWatcher();
-            sharedFile.SettingChanged += (sender, args) => MapViewer.SetupSharedMapFileWatcher();
+            mapStorage.SettingChanged += (sender, args) => MapFileSync.SetupSharedMapFileWatcher();
+            sharedFile.SettingChanged += (sender, args) => MapFileSync.SetupSharedMapFileWatcher();
 
             mapType = config("Map style", "Map type", MapType.Chart, "Type of generated map");
             mapSize = config("Map style", "Map size", MapSize.Smooth, "Resolution of generated map. More details means smoother lines but more data will be stored");
@@ -282,6 +332,7 @@ namespace NomapPrinter
             showPins = config("Pins", "Show map pins", true, "Show pins on drawed map");
             showExploredPins = config("Pins", "Show only explored pins", true, "Only show pins on explored part of the map");
             showMerchantPins = config("Pins", "Show merchants pins always", true, "Show merchant pins even in unexplored part of the map");
+            showPersistentEventPins = config("Pins", "Show persistent event pins always", true, "Show active persistent event pins, including Jotun invasions, even in unexplored parts of the map. Requires Show persistent event pins. Does not reveal terrain or affect ordinary raids.");
             showMyPins = config("Pins", "Show only my pins", true, "Only show your pins on the map");
             showNonCheckedPins = config("Pins", "Show only unchecked pins", true, "Only show pins that doesn't checked (have no red cross)");
             showPinsDoubleSize = config("Pins", "Show static pins in double size", true, "Show pins of the Sacrificial Stones, traders and other important pins in double size (vanilla game behaviour)");
@@ -299,7 +350,8 @@ namespace NomapPrinter
             pinTextFontColor = config("Pins - Text", "Font color", Color.white, "Font color");
             pinTextOffset = config("Pins - Text", "Text offset", 1, "From icon bottom");
 
-            pinTextFont.SettingChanged += (s,e) => MapPinTexts.ClearPinFont();
+            if (!IsHeadless)
+                pinTextFont.SettingChanged += (s,e) => MapPinTexts.ClearPinFont();
 
             checkedPinsAlpha = config("Pins", "Checked Pins Alpha", 1.0f, "Used Alpha value for checked pins (1 = opaque)");
 
@@ -308,6 +360,7 @@ namespace NomapPrinter
             showPinTrader = config("Pins list", "Show Haldor pins", true, "Show Haldor pin on drawed map");
             showPinHildir = config("Pins list", "Show Hildir pins", true, "Show Hildir pin on drawed map");
             showPinHildirQuest = config("Pins list", "Show Hildir quest pins", true, "Show Hildir quest pins on drawed map");
+            showPinPersistentEvent = config("Pins list", "Show persistent event pins", true, "Show markers and areas of active persistent events, including Jotun invasions, on generated maps and on the interactive map when its pin visibility settings are enabled. Does not affect ordinary raids or Epic Loot pins.");
             showPinBogWitch = config("Pins list", "Show Bog Witch pins", true, "Show Bog Witch pin on drawed map");
             showPinBoss = config("Pins list", "Show Boss pins", true, "Show Boss pins on drawed map");
             showPinFire = config("Pins list", "Show Fire pins", true, "Show Fire pins on drawed map");
@@ -320,6 +373,12 @@ namespace NomapPrinter
             showPinEpicLoot = config("Pins list", "Show Epic Loot pins", true, "Show Epic Loot pins on drawed map");
             showLastDeathPin = config("Pins list", "Show Last Death pin", true, "Show pin where you died last time");
 
+            if (!IsHeadless)
+            {
+                showPersistentEventPins.SettingChanged += (s, e) => InvalidatePinVisibility();
+                showPinPersistentEvent.SettingChanged += (s, e) => InvalidatePinVisibility();
+            }
+
             tablePartsSwap = config("Table", "Swap interaction behaviour on map table parts", true, "Make \"Read map\" part to open interactive map and \"Record discoveries\" part to generate map. +" +
                                                                                                      "\nDoesn't work in Show On Interaction map mode", false);
 
@@ -327,8 +386,6 @@ namespace NomapPrinter
             configDirectory = Path.Combine(Paths.ConfigPath, pluginID);
 
             InitTerminalCommands();
-
-            StartCoroutine(LocalizationManager.Localizer.Load());
         }
 
         public void InitTerminalCommands()
@@ -369,6 +426,12 @@ namespace NomapPrinter
         ConfigEntry<T> serverConfig<T>(string group, string name, T defaultValue, string description) => serverConfig(group, name, defaultValue, new ConfigDescription(description));
 #pragma warning restore IDE1006 // Naming Styles
 
+        private static void InvalidatePinVisibility()
+        {
+            if (Minimap.instance != null)
+                Minimap.instance.m_pinUpdateRequired = true;
+        }
+
         public static void LogInfo(object message)
         {
             if (loggingEnabled.Value)
@@ -384,7 +447,7 @@ namespace NomapPrinter
         public static void ShowMessage(string text, MessageHud.MessageType type = MessageHud.MessageType.Center)
         {
             // if someone doesn't want a message and cleared the value
-            if (text.IsNullOrWhiteSpace() || MessageHud.instance == null)
+            if (IsHeadless || text.IsNullOrWhiteSpace() || MessageHud.instance == null)
                 return;
 
             MessageHud.instance.ShowMessage(type, text, 1);
@@ -392,6 +455,16 @@ namespace NomapPrinter
 
         public static void SetupConfigWatcher(bool enabled)
         {
+            if (!enabled)
+            {
+                FileSystemWatcher previous = configFolderWatcher;
+                configFolderWatcher = null;
+                previous?.Dispose();
+                if (previous != null)
+                    ClearCustomTextures();
+                return;
+            }
+
             if (ZNet.instance == null || !ZNet.instance.IsServer())
                 return;
 
@@ -424,12 +497,19 @@ namespace NomapPrinter
 
         private static void ReadTextureFiles(bool initial = false)
         {
+            if (ZNet.instance == null || !ZNet.instance.IsServer() || !Directory.Exists(configDirectory))
+                return;
+
             foreach (FileInfo file in new DirectoryInfo(configDirectory).EnumerateFiles("*", SearchOption.AllDirectories))
                 ReadCustomTexture(file.Name, file.FullName, initial);
         }
 
         private static void ReadTextureFile(object sender, FileSystemEventArgs eargs)
         {
+            // Ignore callbacks already queued when the watcher was disposed.
+            if (!ReferenceEquals(sender, configFolderWatcher))
+                return;
+
             ReadCustomTexture(eargs.Name, eargs.FullPath);
             if (eargs is RenamedEventArgs)
                 ReadCustomTexture((eargs as RenamedEventArgs).OldName, eargs.FullPath, initial: true);
@@ -624,8 +704,11 @@ namespace NomapPrinter
         {
             public static void Postfix()
             {
-                InteractiveMap.ResetSession();
+                if (!IsHeadless)
+                    InteractiveMap.ResetSession();
+
                 SetupConfigWatcher(enabled: true);
+                MapFileSync.Start();
             }
         }
 
@@ -634,7 +717,10 @@ namespace NomapPrinter
         {
             public static void Postfix()
             {
-                InteractiveMap.ResetSession();
+                if (!IsHeadless)
+                    InteractiveMap.ResetSession();
+
+                MapFileSync.Stop();
                 SetupConfigWatcher(enabled: false);
             }
         }

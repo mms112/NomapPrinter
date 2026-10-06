@@ -52,6 +52,9 @@ namespace NomapPrinter
 
             public IEnumerator Init()
             {
+                if (IsHeadless)
+                    yield break;
+
                 if (initialized)
                 {
                     threads = null;
@@ -298,6 +301,9 @@ namespace NomapPrinter
 
             public void Init(Color32[] mapData, MapType mapType)
             {
+                if (IsHeadless)
+                    return;
+
                 int resolution = (int)Math.Sqrt(mapData.Length);
 
                 exploredMap = new Texture2D(resolution, resolution, TextureFormat.RGBA32, false, false);
@@ -326,6 +332,9 @@ namespace NomapPrinter
 
             public bool LoadExploredMap()
             {
+                if (IsHeadless)
+                    return false;
+
                 if (exploredMap != null && exploredMapType == mapType.Value)
                     return true;
 
@@ -442,7 +451,20 @@ namespace NomapPrinter
         public static bool isWorking = false;
         private static IEnumerator worker;
 
-        public static Texture2D mapTexture = new Texture2D(WorldMapData.TextureSize, WorldMapData.TextureSize, TextureFormat.RGB24, false);
+        public static Texture2D mapTexture;
+
+        // Keep the public field, but allocate it only from a graphical client path.
+        // Reading server-side layer data must not allocate a texture as a side effect.
+        internal static Texture2D GetMapTexture()
+        {
+            if (IsHeadless)
+                return null;
+
+            if (mapTexture == null)
+                mapTexture = new Texture2D(WorldMapData.TextureSize, WorldMapData.TextureSize, TextureFormat.RGB24, false);
+
+            return mapTexture;
+        }
 
         private static readonly Dictionary<string, Color32[]> pinIcons = new Dictionary<string, Color32[]>();
         private static readonly Dictionary<string, Color32[]> pinIconsDouble = new Dictionary<string, Color32[]>();
@@ -508,8 +530,13 @@ namespace NomapPrinter
 
         public static void GenerateMap()
         {
+            if (IsHeadless)
+                return;
+
             if (!saveMapToFile.Value && !Game.m_noMap)
                 return;
+
+            _ = GetMapTexture();
 
             if (isWorking && worker != null)
             {
@@ -526,12 +553,19 @@ namespace NomapPrinter
 
         public static void PregenerateMap()
         {
+            if (IsHeadless)
+                return;
+
+            _ = GetMapTexture();
             worldUID = ZNet.instance.GetWorldUID();
             instance.StartCoroutine(CreateMap(pregeneration: true));
         }
 
         public static void PreloadExploredMap()
         {
+            if (IsHeadless)
+                return;
+
             worldUID = ZNet.instance.GetWorldUID();
 
             exploredMapData ??= new ExploredMapData();
@@ -750,6 +784,9 @@ namespace NomapPrinter
 
         public static void SavePlayerExploration()
         {
+            if (IsHeadless)
+                return;
+
             Stopwatch stopwatch = Stopwatch.StartNew();
 
             exploration = new BitArray(Minimap.instance.m_explored);
@@ -1095,6 +1132,9 @@ namespace NomapPrinter
 
         private static Texture2D GetLayerTexture(string layer, bool loadFromServer)
         {
+            if (IsHeadless)
+                return null;
+
             if (!TryGetLayerData(layer, loadFromServer, out byte[] data, out string source))
                 return null;
 
@@ -1305,25 +1345,38 @@ namespace NomapPrinter
                 bool doubleSizeIcon = showPinsDoubleSize.Value && pin.m_doubleSize && NomapPrinter.mapSize.Value == MapSize.Smooth;
 
                 Color32[] iconPixels = doubleSizeIcon ? pinIconsDouble[pin.m_icon.name] : pinIcons[pin.m_icon.name];
-                var size = doubleSizeIcon ? iconSize * 2 : iconSize;
+                int sourceSize = doubleSizeIcon ? iconSize * 2 : iconSize;
+                int size = sourceSize;
+                if (pin.m_type == Minimap.PinType.EventArea && IsPersistentEventPin(pin) && pin.m_worldSize > 0f)
+                {
+                    float worldMapSize = Minimap.instance.m_textureSize * Minimap.instance.m_pixelSize;
+                    size = Math.Max(1, Mathf.RoundToInt(pin.m_worldSize / worldMapSize * mapSize));
+                }
 
                 if (iconPixels != null)
                 {
                     int posX = (int)(mx * mapSize);
                     int posY = (int)(my * mapSize);
 
-                    // get icon position in array
-                    int iconmx = Math.Max(posX - (size / 2), 0);
-                    int iconmy = Math.Max(posY - (size / 2), 0);
+                    // Keep the icon centered and clip larger event areas at the image edges.
+                    int iconmx = posX - (size / 2);
+                    int iconmy = posY - (size / 2);
+                    int firstRow = Math.Max(0, -iconmy);
+                    int lastRow = Math.Min(size, mapSize - iconmy);
+                    int firstCol = Math.Max(0, -iconmx);
+                    int lastCol = Math.Min(size, mapSize - iconmx);
 
-                    // overlay icon pixels to map array with lerp
-                    for (int row = 0; row < size; row++)
+                    // Scale event area pixels to their world diameter; regular pins keep their size.
+                    bool resizeIcon = size != sourceSize;
+                    for (int row = firstRow; row < lastRow; row++)
                     {
-                        for (int col = 0; col < size; col++)
+                        int sourceRow = resizeIcon ? (int)((long)row * sourceSize / size) : row;
+                        for (int col = firstCol; col < lastCol; col++)
                         {
                             int pos = (iconmy + row) * mapSize + iconmx + col;
+                            int sourceCol = resizeIcon ? (int)((long)col * sourceSize / size) : col;
 
-                            Color32 iconPix = iconPixels[row * size + col];
+                            Color32 iconPix = iconPixels[sourceRow * sourceSize + sourceCol];
                             if (iconPix.a != 0 && pinsHildirQuestColored.Value)
                             {
                                 byte alpha = iconPix.a;
@@ -1436,6 +1489,26 @@ namespace NomapPrinter
             return pinsToPrint;
         }
 
+        private static bool IsPersistentEventPin(Minimap.PinData pin)
+        {
+            if (pin == null || (pin.m_type != Minimap.PinType.RandomEvent && pin.m_type != Minimap.PinType.EventArea))
+                return false;
+
+            Minimap minimap = Minimap.instance;
+            if (minimap == null || minimap.m_persistentEventPins == null)
+                return false;
+
+            // Ordinary raids and Epic Loot can use the same pin types and sprites.
+            // Only the actual pair owned by the persistent event system belongs here.
+            foreach (Tuple<Minimap.PinData, Minimap.PinData> pins in minimap.m_persistentEventPins.Values)
+            {
+                if (pins != null && (ReferenceEquals(pin, pins.Item1) || ReferenceEquals(pin, pins.Item2)))
+                    return true;
+            }
+
+            return false;
+        }
+
         internal static bool ShouldShowPin(Minimap.PinData pin)
         {
             if (!showPins.Value || Minimap.instance == null)
@@ -1444,24 +1517,34 @@ namespace NomapPrinter
             if (pin?.m_icon == null)
                 return false;
 
+            bool persistentEventPin = IsPersistentEventPin(pin);
+            if (persistentEventPin && !showEveryPin.Value && !showPinPersistentEvent.Value)
+                return false;
+
             if (pin.m_icon.name != "mapicon_start" && !showEveryPin.Value)
             {
                 if (showNonCheckedPins.Value && pin.m_checked)
                     return false;
 
                 long playerID = Player.m_localPlayer != null ? Player.m_localPlayer.GetPlayerID() : 0L;
-                if (showMyPins.Value && pin.m_ownerID != 0L && pin.m_ownerID != playerID && !IsPinToShowNotOwner(pin))
+                if (showMyPins.Value && pin.m_ownerID != 0L && pin.m_ownerID != playerID && !persistentEventPin && !IsPinToShowNotOwner(pin))
                     return false;
 
                 if (showExploredPins.Value)
                 {
-                    Minimap.instance.WorldToPixel(pin.m_pos, out int px, out int py);
-                    if (!IsExplored(px, py) && (!IsMerchantPin(pin.m_icon.name) || !showMerchantPins.Value) && !IsHildirQuestPin(pin.m_icon.name))
-                        return false;
+                    bool showInUnexploredArea = persistentEventPin
+                        ? showPersistentEventPins.Value
+                        : showMerchantPins.Value && IsMerchantPin(pin.m_icon.name);
+                    if (!showInUnexploredArea && !IsHildirQuestPin(pin.m_icon.name))
+                    {
+                        Minimap.instance.WorldToPixel(pin.m_pos, out int px, out int py);
+                        if (!IsExplored(px, py))
+                            return false;
+                    }
                 }
             }
 
-            if (!IsIconConfiguredShowable(pin.m_icon.name))
+            if (!persistentEventPin && !IsIconConfiguredShowable(pin.m_icon.name))
                 return false;
 
             if (pin.m_type == Minimap.PinType.Death && showLastDeathPin.Value && !showPinDeath.Value)
