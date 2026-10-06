@@ -6,6 +6,7 @@ using HarmonyLib;
 using JetBrains.Annotations;
 using Splatform;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -122,26 +123,29 @@ public class Localizer
         localizationEnabled = true;
     }
 
-    public static void ApplyCurrentLocalization()
+    public static IEnumerator ApplyCurrentLocalization()
     {
-        if (!localizationEnabled || Localization.m_instance == null)
-            return;
+        yield return new WaitUntil(() => PlatformManager.DistributionPlatform != null && PlatformInitializer.PreferencesInitialized);
 
-        string language = defaultLanguage;
-        if (PlatformManager.DistributionPlatform != null && PlatformInitializer.PreferencesInitialized)
+        if (localizationEnabled && Localization.m_instance != null)
         {
-            string selectedLanguage = Localization.m_instance.GetSelectedLanguage();
-            if (string.IsNullOrEmpty(selectedLanguage))
-                PlatformPrefs.SetString("language", defaultLanguage);
-            else
-                language = selectedLanguage;
-        }
+            string language = defaultLanguage;
+            if (PlatformManager.DistributionPlatform != null && PlatformInitializer.PreferencesInitialized)
+            {
+                string selectedLanguage = Localization.m_instance.GetSelectedLanguage();
+                if (string.IsNullOrEmpty(selectedLanguage))
+                    PlatformPrefs.SetString("language", defaultLanguage);
+                else
+                    language = selectedLanguage;
+            }
 
-        LoadLocalization(Localization.m_instance, language);
+            LoadLocalization(Localization.m_instance, language);
+        }
     }
 
     private static void EnsureYamlDotNetAvailable()
     {
+#if false
         try
         {
             if (Type.GetType("YamlDotNet.Serialization.DeserializerBuilder, YamlDotNet", throwOnError: false) != null)
@@ -156,6 +160,7 @@ public class Localizer
 
         throw new FileNotFoundException(
             "YamlDotNet is required for localization but could not be loaded. Install ValheimModding-YamlDotNet.");
+#endif
     }
 
     private static void LoadLocalization(Localization __instance, string language)
